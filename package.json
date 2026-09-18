@@ -5,9 +5,9 @@
   "type": "module",
   "license": "MIT",
   "keywords": ["pi-package", "pi-extension", "task-memory"],
-  "files": ["src", "README.md", "REQUIREMENTS.md"],
+  "files": ["index.ts", "src", "README.md", "REQUIREMENTS.md"],
   "pi": {
-    "extensions": ["./src/index.ts"]
+    "extensions": ["./index.ts"]
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

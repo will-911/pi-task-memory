@@ -13,6 +13,7 @@
     "allowImportingTsExtensions": true
   },
   "include": [
+    "index.ts",
     "src/**/*.ts",
     "tests/**/*.ts"
   ]
