@@ -17,13 +17,25 @@ Pi 的可选 Task 知识记录扩展。它保存设计、决策、接口契约�
 
 ## 安装
 
-在本仓库上一级目录执行：
+通过 GitHub 安装：
+
+```bash
+pi install git:github.com/will-911/pi-task-memory
+```
+
+也可以直接使用 HTTPS URL：
+
+```bash
+pi install https://github.com/will-911/pi-task-memory
+```
+
+从本地源码安装时，在本仓库上一级目录执行：
 
 ```bash
 pi install ./pi-task-memory
 ```
 
-开发时也可以临时加载：
+开发时可以临时加载而不写入配置：
 
 ```bash
 pi -e ./pi-task-memory
@@ -35,7 +47,7 @@ pi -e ./pi-task-memory
 
 ```text
 /task-memory start <slug>
-/task-memory resume <slug>
+/task-memory resume <slug-or-path>
 /task-memory status
 /task-memory list
 /task-memory checkpoint
@@ -43,7 +55,7 @@ pi -e ./pi-task-memory
 ```
 
 - `start`：自动添加本地日期前缀，并在当前 Git 根目录（非 Git 目录则为当前目录）的 `tasks/<YYYYMMDD>-<slug>/` 原子创建 Task；已经带有 8 位日期前缀时不会重复添加。
-- `resume`：使用包含日期前缀的完整 slug 显式恢复已有 Task；有效锁会拒绝并发写入，失效锁需确认后接管。
+- `resume`：接受完整 slug 或 Task 路径；传入 `tasks/20260918-test`、绝对路径或末尾带 `/` 的路径时会自动提取 `20260918-test`，并在当前项目的 `tasks/` 下恢复对应 Task。有效锁会拒绝并发写入，失效锁需确认后接管。
 - `checkpoint`：使用配置的 checkpoint 模型（未配置时使用当前 Session 模型）只合并受影响章节，再由扩展本地组装 `TASK.md`。
 - `stop`：有 pending events 时选择合并、保留、丢弃或取消。
 - 非交互模式下可使用 `stop merge`、`stop keep` 或 `stop discard`。

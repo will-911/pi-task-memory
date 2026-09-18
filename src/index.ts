@@ -26,7 +26,7 @@ import {
   readLock,
   releaseLock,
   taskRoot,
-  validateSlug,
+  taskSlugFromReference,
   withDatePrefix,
 } from "./storage.ts";
 import type { EventCategory, EventStatus, RepositoryContext, TaskBinding, TaskEvent, TaskPaths } from "./types.ts";
@@ -444,7 +444,7 @@ export default function taskMemoryExtension(pi: ExtensionAPI) {
         }
         if (command === "resume") {
           if (activePaths) throw new Error(`Task '${activeSlug}' is already active. Stop it first.`);
-          const slug = validateSlug(value);
+          const slug = taskSlugFromReference(value);
           const detected = await rootFor(ctx.cwd);
           const paths = pathsFor(detected.root, slug);
           if (!(await exists(paths.document))) throw new Error(`Task '${slug}' does not exist under ${detected.root}.`);
@@ -487,7 +487,7 @@ export default function taskMemoryExtension(pi: ExtensionAPI) {
           );
           return;
         }
-        throw new Error("Usage: /task-memory start <slug> | resume <slug> | checkpoint | status | list | stop [merge|keep|discard]");
+        throw new Error("Usage: /task-memory start <slug> | resume <slug-or-path> | checkpoint | status | list | stop [merge|keep|discard]");
       } catch (error) {
         ctx.ui.notify((error as Error).message, "error");
       }

@@ -11,6 +11,7 @@ import {
   readEvents,
   releaseLock,
   taskRoot,
+  taskSlugFromReference,
   validateSlug,
   withDatePrefix,
 } from "../src/storage.ts";
@@ -49,6 +50,14 @@ describe("task storage", () => {
     expect(() => validateSlug("Has Caps")).toThrow(/Task slug/);
   });
 
+
+  it("extracts a task slug from a resume path", () => {
+    expect(taskSlugFromReference("20260918-test")).toBe("20260918-test");
+    expect(taskSlugFromReference("tasks/20260918-test")).toBe("20260918-test");
+    expect(taskSlugFromReference("/workspace/project/tasks/20260918-test/")).toBe("20260918-test");
+    expect(taskSlugFromReference("tasks\\20260918-test\\")).toBe("20260918-test");
+    expect(() => taskSlugFromReference("tasks/Has Caps")).toThrow(/Task slug/);
+  });
   it("adds a local date prefix without duplicating an existing one", () => {
     const date = new Date(2026, 7, 10);
     expect(withDatePrefix("interpreter-record", date)).toBe("20260810-interpreter-record");

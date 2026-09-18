@@ -15,6 +15,12 @@ export function validateSlug(value: string): string {
   return slug;
 }
 
+export function taskSlugFromReference(value: string): string {
+  const reference = value.trim().replace(/[\\/]+$/, "");
+  const slug = reference.split(/[\\/]/).at(-1) ?? "";
+  return validateSlug(slug);
+}
+
 export function withDatePrefix(value: string, now = new Date()): string {
   const slug = validateSlug(value);
   if (/^\d{8}-/.test(slug)) return slug;

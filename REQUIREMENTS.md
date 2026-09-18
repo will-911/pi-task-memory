@@ -25,7 +25,7 @@ Pi Task Memory 是一个**默认关闭、用户手动启用、被动工作的 Ta
 
 ```text
 /task-memory start <slug>
-/task-memory resume <slug>
+/task-memory resume <slug-or-path>
 /task-memory status
 /task-memory list
 /task-memory checkpoint
@@ -33,7 +33,7 @@ Pi Task Memory 是一个**默认关闭、用户手动启用、被动工作的 Ta
 ```
 
 - `start`：为用户提供的 slug 自动添加本地日期 `YYYYMMDD-` 前缀（已有 8 位日期前缀时不重复添加），原子创建 Task 并启用记录。
-- `resume`：显式恢复已有 Task。
+- `resume`：接受完整 slug 或 Task 路径。路径输入只提取最后一个路径段作为 slug，再从当前项目的 `tasks/` 目录恢复 Task。
 - `checkpoint`：将 pending semantic events 合并进正式文档。
 - `stop`：有 pending events 时选择合并、保留、丢弃或取消。
 - 不提供 `pause`。
