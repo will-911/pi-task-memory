@@ -1,0 +1,79 @@
+README.md
+  s_9842cb39ab6de7::t_ce5100194281dd 1-85
+  s_9842cb39ab6de7::t_478832116d7450 86-88
+src/auto-checkpoint.ts
+  s_9842cb39ab6de7::t_bb15ca9a4ea362 1-34
+src/config.ts
+  s_9842cb39ab6de7::t_205cba8d7eb9ac 1-71
+tests/prompt.test.ts
+  s_9842cb39ab6de7::t_0482b82425d3a4 5-6,8-12,15-16,18-19,21
+  s_9842cb39ab6de7::t_447d1e29b5ba64 1-4,7,13-14,17,20,22-23
+  s_9842cb39ab6de7::t_a10b835ae888c3 24
+src/types.ts
+  s_9842cb39ab6de7::t_6d3900903ca386 1-78
+tests/checkpoint.test.ts
+  s_9842cb39ab6de7::t_4430a23bb5ed9a 1,10,12,93-94,102-114
+  s_9842cb39ab6de7::t_9d1d92befc28c8 2-8,11,13-92,95-101
+  s_9842cb39ab6de7::t_8238db6ef3ba4a 9
+src/checkpoint.ts
+  s_9842cb39ab6de7::t_54a2809f25c691 1-3,6,9,24,29,33,35-39,46-54,56,58-64,66-67,69-80,83-88,94-96,112-113,115,117,146-147,157-159,163,187,194,201,217
+  s_9842cb39ab6de7::t_e33e122b29710a 5,7-8,10-23,25-28,30,32,40-45,57,65,68,81-82,89-93,97-111,114,116,118-145,148-156,160-162,164-186,188-193,195-200,202-216
+  s_9842cb39ab6de7::t_5942a5d6ab1040 4
+  s_9842cb39ab6de7::t_78d04b2583c65e 31
+  s_9842cb39ab6de7::t_9f0a18cc5e0ced 34
+  s_9842cb39ab6de7::t_c501a16870a8ad 55
+  s_9842cb39ab6de7::t_f2259b14d56e65 218-220
+  s_9842cb39ab6de7::t_86666f74faffff 221-228
+src/prompt.ts
+  s_9842cb39ab6de7::t_25f918bd9688c7 1-3
+tsconfig.json
+  s_9842cb39ab6de7::t_b0bbb1e295460b 1-12
+  s_9842cb39ab6de7::t_c77acaf123d73a 13-19
+tests/storage.test.ts
+  s_9842cb39ab6de7::t_62a25e38a8c0c4 1-112
+  s_9842cb39ab6de7::t_508035edc1af46 113-115
+  s_9842cb39ab6de7::t_e74453bb777923 116-125
+src/storage.ts
+  s_9842cb39ab6de7::t_1ba275b976e7d4 1-243
+  s_9842cb39ab6de7::t_305c72cf0502a4 244-246
+  s_9842cb39ab6de7::t_4e1dd15a49101e 247-266
+.gitignore
+  s_9842cb39ab6de7::t_755d56702bffd7 1-4
+src/index.ts
+  s_9842cb39ab6de7::t_44e1540cc56086 1-382
+  s_9842cb39ab6de7::t_517a0e569d811d 383-385
+REQUIREMENTS.md
+  s_9842cb39ab6de7::t_fdecfed8170e79 1-2,4,6,8,10,19,21,23,25,51-52,54,56,58-59,61-62,64,73,75,77,79,84,86-88,90,97,99,101,103,105,107,109,126
+  s_9842cb39ab6de7::t_bb8496a1ce4d82 3,5,7,9,11-18,20,22,24,28-50,53,55,57,60,63,65-72,74,76,78,80-83,85,89,91-96,98,100,102,104,106,108,110-125,127-135
+  s_9842cb39ab6de7::t_5ccaf3509acbe6 26-27
+  s_9842cb39ab6de7::t_8e821fcc6a7350 136-138
+tests/auto-checkpoint.test.ts
+  s_9842cb39ab6de7::t_5bd108c6430659 1-58,60,62,64-65
+  s_9842cb39ab6de7::t_706a19e542f37f 59
+  s_9842cb39ab6de7::t_de4ea34efff323 61
+  s_9842cb39ab6de7::t_a1b9367f467e12 63
+  s_9842cb39ab6de7::t_0c0e8f2c264f72 66-67
+tests/config.test.ts
+  s_9842cb39ab6de7::t_a614b844f18adc 1-68
+package.json
+  s_9842cb39ab6de7::t_f38116ebbb4c5d 16-19,22-23,25
+  s_9842cb39ab6de7::t_ba520f6adaf845 1-15,20-21,24,26-32
+package-lock.json
+  s_9842cb39ab6de7::t_67941240306c07 1-4907
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "1b324e0d87f8e349f351c612e30edf650933b947",
+  "prompts": {},
+  "sessions": {
+    "s_9842cb39ab6de7": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "01a0aeaf-d50f-768a-bdfe-79d392ba63a8",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "will-911"
+    }
+  }
+}
