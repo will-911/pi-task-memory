@@ -1,0 +1,19 @@
+index.ts
+  s_9842cb39ab6de7::t_66120aa8cd3c1f 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "18dad1bc65a8eea090b6c9ccd1bddf39be9eb835",
+  "prompts": {},
+  "sessions": {
+    "s_9842cb39ab6de7": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "01a0aeaf-d50f-768a-bdfe-79d392ba63a8",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "will-911"
+    }
+  }
+}
