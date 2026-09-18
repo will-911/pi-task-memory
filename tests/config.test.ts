@@ -42,7 +42,7 @@ describe("task memory configuration", () => {
       {
         checkpointAfterEvents: 6,
         maxPendingAgeMinutes: 10,
-        model: { provider: "openai", id: "checkpoint-model" },
+        model: { provider: "openai", id: "checkpoint-model", thinking: "low" },
       },
       true,
     );
@@ -50,6 +50,19 @@ describe("task memory configuration", () => {
     expect(loadConfig(cwd, agentDir)).toEqual({
       checkpointAfterEvents: 6,
       maxPendingAgeMinutes: 10,
+      model: { provider: "openai", id: "checkpoint-model", thinking: "low" },
+    });
+  });
+
+  it("ignores an invalid checkpoint thinking level", () => {
+    const cwd = temporaryDirectory();
+    const agentDir = temporaryDirectory();
+    writeConfig(agentDir, {
+      model: { provider: "openai", id: "checkpoint-model", thinking: "turbo" },
+    });
+
+    expect(loadConfig(cwd, agentDir)).toEqual({
+      ...DEFAULT_CONFIG,
       model: { provider: "openai", id: "checkpoint-model" },
     });
   });

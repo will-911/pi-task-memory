@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import type { ModelThinkingLevel } from "@earendil-works/pi-ai";
 import { getAgentDir } from "@earendil-works/pi-coding-agent";
 import {
   DEFAULT_CHECKPOINT_AFTER_EVENTS,
@@ -8,9 +9,20 @@ import {
 
 export const CONFIG_FILE_NAME = "task-memory.json";
 
+const THINKING_LEVELS = new Set<ModelThinkingLevel>([
+  "off",
+  "minimal",
+  "low",
+  "medium",
+  "high",
+  "xhigh",
+  "max",
+]);
+
 export interface ConfiguredCheckpointModel {
   provider: string;
   id: string;
+  thinking?: ModelThinkingLevel;
 }
 
 export interface TaskMemoryConfig {
@@ -53,7 +65,10 @@ function normalizeConfig(value: Record<string, unknown>): Partial<TaskMemoryConf
   if (isRecord(value.model)) {
     const provider = typeof value.model.provider === "string" ? value.model.provider.trim() : "";
     const id = typeof value.model.id === "string" ? value.model.id.trim() : "";
-    if (provider && id) normalized.model = { provider, id };
+    if (provider && id) {
+      const thinking = isThinkingLevel(value.model.thinking) ? value.model.thinking : undefined;
+      normalized.model = { provider, id, ...(thinking ? { thinking } : {}) };
+    }
   }
   return normalized;
 }
@@ -64,6 +79,10 @@ function isPositiveInteger(value: unknown): value is number {
 
 function isPositiveNumber(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value) && value > 0;
+}
+
+function isThinkingLevel(value: unknown): value is ModelThinkingLevel {
+  return typeof value === "string" && THINKING_LEVELS.has(value as ModelThinkingLevel);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

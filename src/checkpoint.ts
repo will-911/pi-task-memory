@@ -1,5 +1,12 @@
 import { randomUUID } from "node:crypto";
-import type { Model, UserMessage } from "@earendil-works/pi-ai";
+import type {
+  AssistantMessage,
+  Context,
+  Model,
+  ModelThinkingLevel,
+  SimpleStreamOptions,
+  UserMessage,
+} from "@earendil-works/pi-ai";
 import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { atomicWrite, consumeEvents, readDocument } from "./storage.ts";
 import { TASK_SECTIONS, type TaskEvent, type TaskPaths } from "./types.ts";
@@ -41,13 +48,49 @@ export interface CheckpointResult {
 
 export interface CheckpointOptions {
   model?: Model<any>;
+  thinking?: ModelThinkingLevel;
   signal?: AbortSignal;
 }
+
+type CheckpointRequestOptions = Pick<
+  SimpleStreamOptions,
+  "maxTokens" | "cacheRetention" | "sessionId" | "signal"
+>;
 
 interface ParsedDocument {
   title: string;
   lead: string;
   sections: Map<SectionName, string>;
+}
+
+async function completeCheckpoint(
+  ctx: ExtensionContext,
+  model: Model<any>,
+  context: Context,
+  requestOptions: CheckpointRequestOptions,
+  thinking?: ModelThinkingLevel,
+): Promise<AssistantMessage> {
+  if (thinking === undefined) {
+    return ctx.modelRegistry.complete(model, context, requestOptions);
+  }
+
+  const provider = ctx.modelRegistry.getProvider(model.provider);
+  if (!provider) throw new Error(`Checkpoint provider '${model.provider}' is not available.`);
+  const auth = await ctx.modelRegistry.getApiKeyAndHeaders(model);
+  if (!auth.ok) throw new Error(auth.error);
+
+  const requestModel = auth.baseUrl ? { ...model, baseUrl: auth.baseUrl } : model;
+  return provider.streamSimple(
+    requestModel,
+    context,
+    {
+      ...requestOptions,
+      reasoning: thinking === "off" ? undefined : thinking,
+      apiKey: auth.apiKey,
+      headers: auth.headers,
+      env: auth.env,
+    },
+  ).result();
 }
 
 export async function checkpoint(
@@ -67,7 +110,8 @@ export async function checkpoint(
       content: [{ type: "text", text: prompt }],
       timestamp: Date.now(),
     };
-    const response = await ctx.modelRegistry.complete(
+    const response = await completeCheckpoint(
+      ctx,
       model,
       { systemPrompt: SYSTEM_PROMPT, messages: [message] },
       {
@@ -76,6 +120,7 @@ export async function checkpoint(
         sessionId: randomUUID(),
         signal: options.signal,
       },
+      options.thinking,
     );
     if (response.stopReason === "aborted") throw new Error("Checkpoint was aborted; pending events were kept.");
     if (response.stopReason === "error") throw new Error(`Checkpoint model failed: ${response.errorMessage ?? "unknown error"}`);

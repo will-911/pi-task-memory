@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { StringEnum } from "@earendil-works/pi-ai";
-import type { Model } from "@earendil-works/pi-ai";
+import type { Model, ModelThinkingLevel } from "@earendil-works/pi-ai";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
 import {
@@ -133,6 +133,11 @@ export default function taskMemoryExtension(pi: ExtensionAPI) {
     return model;
   }
 
+  function checkpointThinking(): ModelThinkingLevel {
+    if (config.model) return config.model.thinking ?? "off";
+    return pi.getThinkingLevel();
+  }
+
   function setToolActive(active: boolean): void {
     const tools = pi.getActiveTools().filter((name) => name !== TOOL_NAME);
     if (active) tools.push(TOOL_NAME);
@@ -207,7 +212,11 @@ export default function taskMemoryExtension(pi: ExtensionAPI) {
     let failed = false;
 
     const tracked = Promise.resolve()
-      .then(() => checkpoint(paths, ctx, { model: checkpointModel(ctx), signal: controller.signal }))
+      .then(() => checkpoint(paths, ctx, {
+        model: checkpointModel(ctx),
+        thinking: checkpointThinking(),
+        signal: controller.signal,
+      }))
       .then(() => {
         if (activePaths === paths && autoCheckpointGeneration === generation) autoCheckpointNotBefore = 0;
       })
@@ -323,7 +332,11 @@ export default function taskMemoryExtension(pi: ExtensionAPI) {
     await pauseAutoCheckpoint(false);
     const paths = activePaths;
     try {
-      const result = await checkpoint(paths, ctx, { model: checkpointModel(ctx), signal });
+      const result = await checkpoint(paths, ctx, {
+        model: checkpointModel(ctx),
+        thinking: checkpointThinking(),
+        signal,
+      });
       autoCheckpointNotBefore = 0;
       if (result.merged === 0) ctx.ui.notify("Task memory: no pending events.", "info");
       else ctx.ui.notify(`Task memory: merged ${result.merged} event${result.merged === 1 ? "" : "s"}.`, "info");

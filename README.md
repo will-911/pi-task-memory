@@ -88,14 +88,15 @@ pi -e ./pi-task-memory
 {
   "model": {
     "provider": "anthropic",
-    "id": "claude-sonnet-4-5"
+    "id": "claude-sonnet-4-5",
+    "thinking": "low"
   },
   "checkpointAfterEvents": 6,
   "maxPendingAgeMinutes": 10
 }
 ```
 
-- `model`：checkpoint 专用模型。省略时使用当前 Session 模型；配置的模型不可用时 checkpoint 失败并保留 pending events。
+- `model`：checkpoint 专用模型。`thinking` 可为 `off`、`minimal`、`low`、`medium`、`high`、`xhigh` 或 `max`；省略 `thinking` 时为 `off`。省略整个 `model` 时使用当前 Session 的模型和 thinking level。配置的模型不可用时 checkpoint 失败并保留 pending events。
 - `checkpointAfterEvents`：事件数触发阈值，默认 `6`。
 - `maxPendingAgeMinutes`：最早 pending event 的最大等待分钟数，默认 `10`。
 - 不使用 token 数作为 checkpoint 触发条件。
