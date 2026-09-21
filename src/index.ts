@@ -10,7 +10,7 @@ import {
 } from "./auto-checkpoint.ts";
 import { checkpoint } from "./checkpoint.ts";
 import { DEFAULT_CONFIG, loadConfig, type TaskMemoryConfig } from "./config.ts";
-import { buildTaskMemorySystemPrompt } from "./prompt.ts";
+import { buildTaskMemorySystemPromptSection } from "./prompt.ts";
 import {
   acquireLock,
   appendEvent,
@@ -546,7 +546,9 @@ export default function taskMemoryExtension(pi: ExtensionAPI) {
 
   pi.on("before_agent_start", (event) => {
     if (!activeSlug) return;
-    return { systemPrompt: buildTaskMemorySystemPrompt(event.systemPrompt, activeSlug) };
+    // Pi 0.86 stores the prompt as structured sections. Mutating one section keeps
+    // the built-in prompt and user-provided sections intact across turns/resumes.
+    event.systemPromptOptions.sections.task_memory = buildTaskMemorySystemPromptSection(activeSlug);
   });
   pi.on("session_before_compact", (_event, ctx) => {
     if (!activePaths) return;

@@ -7,6 +7,7 @@ import type {
   SimpleStreamOptions,
   UserMessage,
 } from "@earendil-works/pi-ai";
+import { normalizeContext } from "@earendil-works/pi-ai";
 import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { atomicWrite, consumeEvents, readDocument } from "./storage.ts";
 import { TASK_SECTIONS, type TaskEvent, type TaskPaths } from "./types.ts";
@@ -82,7 +83,7 @@ async function completeCheckpoint(
   const requestModel = auth.baseUrl ? { ...model, baseUrl: auth.baseUrl } : model;
   return provider.streamSimple(
     requestModel,
-    context,
+    normalizeContext(context),
     {
       ...requestOptions,
       reasoning: thinking === "off" ? undefined : thinking,
