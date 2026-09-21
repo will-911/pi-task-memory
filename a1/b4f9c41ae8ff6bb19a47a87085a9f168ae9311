@@ -1,0 +1,23 @@
+package.json
+  s_239592eb13c2c0::t_7ab35fdf0eb7c5 22-23
+src/checkpoint.ts
+  s_239592eb13c2c0::t_67623f37bf07cf 10,86
+src/index.ts
+  s_239592eb13c2c0::t_b1f4b4abb3f6a3 13,549-551
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "a1b4f9c41ae8ff6bb19a47a87085a9f168ae9311",
+  "prompts": {},
+  "sessions": {
+    "s_239592eb13c2c0": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "01a0bd2a-8f21-7233-82ef-a4deb60f022f",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "will-911"
+    }
+  }
+}
