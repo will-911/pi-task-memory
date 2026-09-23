@@ -545,10 +545,11 @@ export default function taskMemoryExtension(pi: ExtensionAPI) {
   });
 
   pi.on("before_agent_start", (event) => {
-    if (!activeSlug) return;
+    if (!activePaths || !activeSlug) return;
+    const taskDir = activePaths.dir;
     // Pi 0.86 stores the prompt as structured sections. Mutating one section keeps
     // the built-in prompt and user-provided sections intact across turns/resumes.
-    event.systemPromptOptions.sections.task_memory = buildTaskMemorySystemPromptSection(activeSlug);
+    event.systemPromptOptions.sections.task_memory = buildTaskMemorySystemPromptSection(taskDir);
   });
   pi.on("session_before_compact", (_event, ctx) => {
     if (!activePaths) return;
