@@ -80,6 +80,18 @@ pi -e ./pi-task-memory
 
 `/task-memory status` 会显示自动 checkpoint 当前是 `idle`、`scheduled`、`waiting for trigger` 或 `running`。
 
+启用后，Pi 底部状态栏显示：
+
+```text
+task:20260918-example · pending 3 [decision 2, design 1]
+```
+
+- `pending`：尚未合并到 `TASK.md` 的 Semantic Event 数量。
+- 分类：按类别统计待合并事件，仅显示非零类别，按类别名称排序；同 key 的更新和删除也分别计数，不代表已合并事实数量。
+- 无待合并事件时显示 `task:<slug> · pending 0`，不显示分类。
+- 手动或自动合并期间追加 `· merging`；启动、恢复、记录事件和合并完成后自动刷新，停止后隐藏。
+- 统计读取失败显示 `stats unavailable`，不影响记录或合并。
+
 ## 配置
 
 配置使用独立文件：全局 `~/.pi/agent/task-memory.json` 或项目级 `.pi/task-memory.json`；项目级配置覆盖全局配置：

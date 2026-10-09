@@ -11,6 +11,7 @@ import {
 import { checkpoint } from "./checkpoint.ts";
 import { DEFAULT_CONFIG, loadConfig, type TaskMemoryConfig } from "./config.ts";
 import { buildTaskMemorySystemPromptSection } from "./prompt.ts";
+import { formatTaskMemoryStatus, readTaskMemoryStats, type TaskMemoryStats } from "./status.ts";
 import {
   acquireLock,
   appendEvent,
@@ -110,6 +111,9 @@ export default function taskMemoryExtension(pi: ExtensionAPI) {
   let activePaths: TaskPaths | undefined;
   let activeSlug: string | undefined;
   let config: TaskMemoryConfig = DEFAULT_CONFIG;
+  let statusStats: TaskMemoryStats | undefined;
+  let statusRequest = 0;
+  let manualCheckpointing = false;
 
   let autoCheckpointTimer: ReturnType<typeof setTimeout> | undefined;
   let backgroundCheckpoint: Promise<void> | undefined;
@@ -144,9 +148,28 @@ export default function taskMemoryExtension(pi: ExtensionAPI) {
     pi.setActiveTools(tools);
   }
 
-  function updateStatus(ctx: ExtensionContext): void {
-    if (activePaths && activeSlug) ctx.ui.setStatus(STATUS_KEY, `task:${activeSlug}`);
-    else ctx.ui.setStatus(STATUS_KEY, undefined);
+  async function updateStatus(ctx: ExtensionContext): Promise<void> {
+    const paths = activePaths;
+    const slug = activeSlug;
+    const request = ++statusRequest;
+    const render = () => ctx.ui.setStatus(
+      STATUS_KEY,
+      slug ? formatTaskMemoryStatus(slug, statusStats, manualCheckpointing || !!backgroundCheckpoint) : undefined,
+    );
+    render();
+    if (!paths || !slug) return;
+    try {
+      const stats = await readTaskMemoryStats(paths);
+      // A previous task or slower refresh must not overwrite the current status.
+      if (activePaths !== paths || statusRequest !== request) return;
+      statusStats = stats;
+      render();
+    } catch {
+      // Status is best-effort and must never interrupt recording or checkpointing.
+      if (activePaths !== paths || statusRequest !== request) return;
+      statusStats = undefined;
+      ctx.ui.setStatus(STATUS_KEY, `${formatTaskMemoryStatus(slug, undefined, manualCheckpointing || !!backgroundCheckpoint)} · stats unavailable`);
+    }
   }
 
   function clearAutoCheckpointTimer(): void {
@@ -208,7 +231,6 @@ export default function taskMemoryExtension(pi: ExtensionAPI) {
     clearAutoCheckpointTimer();
     const controller = new AbortController();
     backgroundCheckpointAbort = controller;
-    ctx.ui.setStatus(STATUS_KEY, `task:${slug} checkpointing`);
     let failed = false;
 
     const tracked = Promise.resolve()
@@ -232,7 +254,7 @@ export default function taskMemoryExtension(pi: ExtensionAPI) {
       .finally(() => {
         if (backgroundCheckpoint === tracked) backgroundCheckpoint = undefined;
         if (backgroundCheckpointAbort === controller) backgroundCheckpointAbort = undefined;
-        updateStatus(ctx);
+        void updateStatus(ctx);
         if (activePaths !== paths || autoCheckpointGeneration !== generation) return;
         const rerunReason = rerunAutoCheckpoint;
         rerunAutoCheckpoint = undefined;
@@ -244,6 +266,7 @@ export default function taskMemoryExtension(pi: ExtensionAPI) {
       });
 
     backgroundCheckpoint = tracked;
+    void updateStatus(ctx);
   }
 
   async function pauseAutoCheckpoint(abortRunning: boolean): Promise<void> {
@@ -261,8 +284,9 @@ export default function taskMemoryExtension(pi: ExtensionAPI) {
     autoCheckpointNotBefore = 0;
     activePaths = paths;
     activeSlug = slug;
+    statusStats = undefined;
     setToolActive(true);
-    updateStatus(ctx);
+    void updateStatus(ctx);
     if (persist) {
       pi.appendEntry<TaskBinding>(BINDING_ENTRY, { version: 1, active: true, taskSlug: slug, taskDir: paths.dir });
     }
@@ -277,8 +301,9 @@ export default function taskMemoryExtension(pi: ExtensionAPI) {
     backgroundCheckpointAbort?.abort();
     activePaths = undefined;
     activeSlug = undefined;
+    statusStats = undefined;
     setToolActive(false);
-    updateStatus(ctx);
+    void updateStatus(ctx);
     if (persist) pi.appendEntry<TaskBinding>(BINDING_ENTRY, { version: 1, active: false });
   }
 
@@ -331,6 +356,8 @@ export default function taskMemoryExtension(pi: ExtensionAPI) {
     if (!activePaths) throw new Error("No task memory is active.");
     await pauseAutoCheckpoint(false);
     const paths = activePaths;
+    manualCheckpointing = true;
+    void updateStatus(ctx);
     try {
       const result = await checkpoint(paths, ctx, {
         model: checkpointModel(ctx),
@@ -341,6 +368,8 @@ export default function taskMemoryExtension(pi: ExtensionAPI) {
       if (result.merged === 0) ctx.ui.notify("Task memory: no pending events.", "info");
       else ctx.ui.notify(`Task memory: merged ${result.merged} event${result.merged === 1 ? "" : "s"}.`, "info");
     } finally {
+      manualCheckpointing = false;
+      await updateStatus(ctx);
       if (activePaths === paths) requestAutoCheckpointSchedule(ctx);
     }
   }
@@ -420,6 +449,7 @@ export default function taskMemoryExtension(pi: ExtensionAPI) {
         repository: params.repository,
       };
       await appendEvent(activePaths.events, event);
+      await updateStatus(ctx);
       requestAutoCheckpointSchedule(ctx);
       return {
         content: [{ type: "text", text: `Recorded ${event.category} '${event.key}' for task '${activeSlug}'.` }],
@@ -485,6 +515,7 @@ export default function taskMemoryExtension(pi: ExtensionAPI) {
             ctx.ui.notify("Task memory is inactive.", "info");
             return;
           }
+          await updateStatus(ctx);
           const [events, lock] = await Promise.all([readEvents(activePaths.events), readLock(activePaths.lock)]);
           ctx.ui.notify(
             [
@@ -563,8 +594,7 @@ export default function taskMemoryExtension(pi: ExtensionAPI) {
     try {
       await releaseLock(activePaths.lock, sessionId(ctx));
     } finally {
-      activePaths = undefined;
-      activeSlug = undefined;
+      unbind(ctx, false);
     }
   });
 }
