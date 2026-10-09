@@ -80,7 +80,7 @@ pi -e ./pi-task-memory
 
 `/task-memory status` 会显示自动 checkpoint 当前是 `idle`、`scheduled`、`waiting for trigger` 或 `running`。
 
-启用后，Pi 底部状态栏显示：
+启用后，Pi 输入框上方显示状态组件（不占用底部页脚）：
 
 ```text
 task:20260918-example · pending 3 [decision 2, design 1]

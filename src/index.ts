@@ -152,9 +152,10 @@ export default function taskMemoryExtension(pi: ExtensionAPI) {
     const paths = activePaths;
     const slug = activeSlug;
     const request = ++statusRequest;
-    const render = () => ctx.ui.setStatus(
+    const render = () => ctx.ui.setWidget(
       STATUS_KEY,
-      slug ? formatTaskMemoryStatus(slug, statusStats, manualCheckpointing || !!backgroundCheckpoint) : undefined,
+      slug ? [formatTaskMemoryStatus(slug, statusStats, manualCheckpointing || !!backgroundCheckpoint)] : undefined,
+      { placement: "aboveEditor" },
     );
     render();
     if (!paths || !slug) return;
@@ -168,7 +169,11 @@ export default function taskMemoryExtension(pi: ExtensionAPI) {
       // Status is best-effort and must never interrupt recording or checkpointing.
       if (activePaths !== paths || statusRequest !== request) return;
       statusStats = undefined;
-      ctx.ui.setStatus(STATUS_KEY, `${formatTaskMemoryStatus(slug, undefined, manualCheckpointing || !!backgroundCheckpoint)} · stats unavailable`);
+      ctx.ui.setWidget(
+        STATUS_KEY,
+        [`${formatTaskMemoryStatus(slug, undefined, manualCheckpointing || !!backgroundCheckpoint)} · stats unavailable`],
+        { placement: "aboveEditor" },
+      );
     }
   }
 

@@ -17,18 +17,19 @@ afterEach(async () => {
   merge.mockReset();
 });
 
-it("refreshes footer on start, recording, manual/background checkpoint, and stop", async () => {
+it("refreshes the above-editor widget on start, recording, checkpoint, and stop", async () => {
   const cwd = await mkdtemp(join(tmpdir(), "task-memory-footer-"));
   const handlers = new Map<string, Function>();
   let command: any;
   let tool: any;
   let tools: string[] = [];
+  const setWidget = vi.fn();
   const setStatus = vi.fn();
   const ctx = {
     cwd, hasUI: false,
     model: {},
     sessionManager: { getSessionId: () => "test" },
-    ui: { setStatus, notify: vi.fn() },
+    ui: { setWidget, setStatus, notify: vi.fn() },
   } as unknown as ExtensionContext;
   const pi = {
     registerTool: (value: any) => { tool = value; },
@@ -45,7 +46,7 @@ it("refreshes footer on start, recording, manual/background checkpoint, and stop
     await handlers.get("session_shutdown")?.({ reason: "exit" }, ctx);
     await rm(cwd, { recursive: true, force: true });
   };
-  const status = () => setStatus.mock.calls.at(-1)?.[1];
+  const status = () => setWidget.mock.calls.at(-1)?.[1]?.[0];
 
   await command.handler("start demo", ctx);
   await vi.waitFor(() => expect(status()).toMatch(/task:.*demo · pending 0$/));
@@ -79,4 +80,9 @@ it("refreshes footer on start, recording, manual/background checkpoint, and stop
 
   await command.handler("stop keep", ctx);
   expect(status()).toBeUndefined();
+  expect(setWidget.mock.calls.at(-1)?.[1]).toBeUndefined();
+  expect(setWidget.mock.calls.every(([key, , options]) =>
+    key === "task-memory" && options?.placement === "aboveEditor",
+  )).toBe(true);
+  expect(setStatus).not.toHaveBeenCalled();
 });
