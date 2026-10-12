@@ -19,6 +19,7 @@ const SECTION_BY_CATEGORY: Record<TaskEvent["category"], SectionName> = {
   task_description: "Task Description",
   repository_context: "Repositories",
   design: "Design",
+  architecture_and_flowcharts: "Architecture and Flowcharts",
   decision: "Decisions",
   interface_contract: "Interfaces / Contracts",
   verification: "Verification",
@@ -37,6 +38,7 @@ Rules:
 - Merge by semantic key. Repeated keys update the same fact; never create duplicate history entries.
 - Represent current truth, not chronology. Do not add a timeline, changelog, diary, TODO list, next-steps list, implementation log, test report, or tool-call log.
 - Keep confirmed facts concise but preserve rationale, constraints, exact interface contracts, repository branch/commit/worktree facts, required verification points, and unresolved blockers when supplied.
+- The Architecture and Flowcharts section records confirmed system structure, component relationships, and flows. Preserve supplied Mermaid code fences and diagram semantics; never invent components or flows.
 - The Verification section records only what needs to be verified, including relevant conditions or risks. Event status expresses confidence/relevance of the verification point, never a test outcome. Never record test commands, execution details, pass/fail outcomes, or test reports.
 - status=provisional must be visibly marked as provisional. status=rejected or status=superseded removes the keyed claim unless the event supplies its replacement. operation=delete removes the keyed item.
 - Never infer missing facts. Never convert guesses into conclusions. Never invent evidence, plans, repositories, hashes, paths, decisions, or verification points.

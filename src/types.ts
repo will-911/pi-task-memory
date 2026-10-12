@@ -2,6 +2,7 @@ export const TASK_SECTIONS = [
   "Task Description",
   "Repositories",
   "Design",
+  "Architecture and Flowcharts",
   "Decisions",
   "Interfaces / Contracts",
   "Verification",
@@ -13,6 +14,7 @@ export type EventCategory =
   | "task_description"
   | "repository_context"
   | "design"
+  | "architecture_and_flowcharts"
   | "decision"
   | "interface_contract"
   | "verification"

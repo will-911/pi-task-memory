@@ -48,6 +48,7 @@ pi -e ./pi-task-memory
 ```text
 /task-memory start <slug>
 /task-memory resume <slug-or-path>
+/task-memory add <描述>
 /task-memory status
 /task-memory list
 /task-memory checkpoint
@@ -56,17 +57,27 @@ pi -e ./pi-task-memory
 
 - `start`：自动添加本地日期前缀，并在当前 Git 根目录（非 Git 目录则为当前目录）的 `tasks/<YYYYMMDD>-<slug>/` 原子创建 Task；已经带有 8 位日期前缀时不会重复添加。
 - `resume`：接受完整 slug 或 Task 路径；传入 `tasks/20260918-test`、绝对路径或末尾带 `/` 的路径时会自动提取 `20260918-test`，并在当前项目的 `tasks/` 下恢复对应 Task。有效锁会拒绝并发写入，失效锁需确认后接管。
+- `add`：手动指导当前 Agent 根据描述和已有对话事实产生一个 Semantic Event，并调用 `task_memory_event`；不直接写入事件或执行 checkpoint。必须先 `start` 或 `resume`；Agent 忙碌时作为 follow-up 排队。描述不足时 Agent 应先询问，不得编造事实。
 - `checkpoint`：使用配置的 checkpoint 模型（未配置时使用当前 Session 模型）只合并受影响章节，再由扩展本地组装 `TASK.md`。
 - `stop`：有 pending events 时选择合并、保留、丢弃或取消。
 - 非交互模式下可使用 `stop merge`、`stop keep` 或 `stop discard`。
 
-启用后，AI 获得 `task_memory_event` 工具。你可以直接告诉 AI：
+例如，手动要求记录架构与流程图：
+
+```text
+/task-memory add 把刚才确认的系统架构和流程图记录为 architecture_and_flowcharts 事件，保留 Mermaid 图表。
+```
+
+启用后，AI 获得 `task_memory_event` 工具。你也可以直接告诉 AI：
 
 ```text
 把刚才确认的幂等约束记录到 task memory。
 修正之前的 repository baseline。
 删除已经失效的接口结论。
+把确认的系统架构和流程图记录为 architecture_and_flowcharts 事件。
 ```
+
+`architecture_and_flowcharts` 用于记录已确认的系统结构、组件关系和流程；图表（例如 Mermaid 代码块）放在事件的 `details` 中。Checkpoint 将其合并到 `Architecture and Flowcharts` 章节，同 key 的更新或删除沿用现有语义。一般设计约束和行为结论仍使用 `design`。
 
 ## 自动 Checkpoint
 
@@ -128,6 +139,7 @@ task:20260918-example · pending 3 [decision 2, design 1]
 - Task Description
 - Repositories
 - Design
+- Architecture and Flowcharts
 - Decisions
 - Interfaces / Contracts
 - Verification

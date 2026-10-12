@@ -4,7 +4,7 @@ import { join } from "node:path";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { afterEach, expect, it, vi } from "vitest";
 import taskMemoryExtension from "../src/index.ts";
-import { atomicWrite, clearEvents } from "../src/storage.ts";
+import { atomicWrite, clearEvents, readEvents } from "../src/storage.ts";
 import type { TaskPaths } from "../src/types.ts";
 
 const { merge } = vi.hoisted(() => ({ merge: vi.fn() }));
@@ -55,13 +55,29 @@ it("refreshes the above-editor widget on start, recording, checkpoint, and stop"
   }, undefined, undefined, ctx);
   await record();
   expect(status()).toMatch(/ · pending 1 \[decision 1\]$/);
+  expect(JSON.stringify(tool.parameters)).toContain('"architecture_and_flowcharts"');
+  const diagram = "```mermaid\nflowchart TD\n  Agent --> EventStore\n```";
+  const result = await tool.execute("architecture-call", {
+    category: "architecture_and_flowcharts", key: "system-flow",
+    summary: "Confirmed event flow", details: diagram,
+  }, undefined, undefined, ctx);
+  expect(result.isError).not.toBe(true);
+  expect(result.content[0].text).toContain("Recorded architecture_and_flowcharts 'system-flow'");
+  expect(status()).toMatch(/ · pending 2 \[architecture_and_flowcharts 1, decision 1\]$/);
 
   let finishMerge!: () => void;
   merge.mockImplementation(async (paths: TaskPaths) => {
     await new Promise<void>((resolve) => { finishMerge = resolve; });
+    const events = await readEvents(paths.events);
+    if (events.length === 2) {
+      expect(events[1]).toMatchObject({
+        category: "architecture_and_flowcharts", key: "system-flow", details: diagram,
+        status: "accepted", operation: "upsert",
+      });
+    }
     await atomicWrite(paths.document, "# Updated task\n");
     await clearEvents(paths.events);
-    return { merged: 1 };
+    return { merged: events.length };
   });
   const manual = command.handler("checkpoint", ctx);
   await vi.waitFor(() => expect(status()).toContain(" · merging"));

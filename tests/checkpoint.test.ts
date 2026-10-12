@@ -53,6 +53,42 @@ describe("section patch checkpoint", () => {
     ]);
   });
 
+  it("maps architecture and flowchart events in canonical order", () => {
+    expect(impactedSections([
+      event("decision"), event("architecture_and_flowcharts", "system-flow"),
+      event("design"), event("architecture_and_flowcharts", "components"),
+    ])).toEqual(["Design", "Architecture and Flowcharts", "Decisions"]);
+  });
+
+  it("round-trips Mermaid diagrams through targeted patches", () => {
+    const diagram = "```mermaid\nflowchart TD\n  Agent --> EventStore\n  EventStore --> Checkpoint\n```";
+    const architectureEvent = {
+      ...event("architecture_and_flowcharts", "system-flow"),
+      details: diagram,
+    };
+    const prompt = buildPrompt(existing, [architectureEvent]);
+    expect(prompt).toContain('"targetSections": [\n    "Architecture and Flowcharts"');
+    expect(prompt).toContain(JSON.stringify(diagram));
+    expect(prompt).not.toContain("Keep transport independent");
+
+    const patches = parseSectionPatchResponse(JSON.stringify({
+      sections: { "Architecture and Flowcharts": diagram },
+    }), impactedSections([architectureEvent]));
+    const updated = applySectionPatches(existing, patches);
+    validateDocument(updated, existing);
+    expect(updated).toContain(`## Architecture and Flowcharts\n\n${diagram}`);
+    expect(updated.indexOf("## Design")).toBeLessThan(updated.indexOf("## Architecture and Flowcharts"));
+    expect(updated.indexOf("## Architecture and Flowcharts")).toBeLessThan(updated.indexOf("## Decisions"));
+    expect(updated).toContain("## Design\n\n- Keep transport independent.");
+    expect(updated).toContain("## Decisions\n\n- Use JSON.");
+
+    const nextPrompt = buildPrompt(updated, [architectureEvent]);
+    expect(nextPrompt).toContain('"Architecture and Flowcharts":');
+    expect(nextPrompt).toContain(JSON.stringify(diagram));
+    expect(applySectionPatches(updated, { Decisions: "- Use MessagePack." })).toContain(diagram);
+    expect(applySectionPatches(updated, { "Architecture and Flowcharts": null })).toBe(existing);
+  });
+
   it("sends only task context and affected sections", () => {
     const prompt = buildPrompt(existing, [event("decision", "wire-format")]);
     expect(prompt).toContain("<checkpoint_input_json>");

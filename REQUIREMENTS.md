@@ -11,6 +11,7 @@ Pi Task Memory 是一个**默认关闭、用户手动启用、被动工作的 Ta
 - Task 描述与业务背景
 - Repository 基线与工作位置
 - 设计结论
+- 系统架构、组件关系与流程图
 - 决策及理由
 - 接口与契约
 - 需要验证的关键点
@@ -26,6 +27,7 @@ Pi Task Memory 是一个**默认关闭、用户手动启用、被动工作的 Ta
 ```text
 /task-memory start <slug>
 /task-memory resume <slug-or-path>
+/task-memory add <guidance>
 /task-memory status
 /task-memory list
 /task-memory checkpoint
@@ -34,6 +36,7 @@ Pi Task Memory 是一个**默认关闭、用户手动启用、被动工作的 Ta
 
 - `start`：为用户提供的 slug 自动添加本地日期 `YYYYMMDD-` 前缀（已有 8 位日期前缀时不重复添加），原子创建 Task 并启用记录。
 - `resume`：接受完整 slug 或 Task 路径。路径输入只提取最后一个路径段作为 slug，再从当前项目的 `tasks/` 目录恢复 Task。
+- `add`：仅在 Task 已启用时，将用户的自然语言指导作为显式用户请求发送给当前 Agent，要求产生一个事件并调用 `task_memory_event`；Agent 忙碌时排队为 follow-up。不得由命令直接写入事件或执行 checkpoint；缺少描述时提示用法，事实不足时 Agent 应询问澄清。
 - `checkpoint`：将 pending semantic events 合并进正式文档。
 - `stop`：有 pending events 时选择合并、保留、丢弃或取消。
 - 不提供 `pause`。
@@ -65,11 +68,12 @@ Semantic Event 必须立即持久化。`TASK.md` 只在手动或自动 checkpoin
 1. `Task Description`
 2. `Repositories`
 3. `Design`
-4. `Decisions`
-5. `Interfaces / Contracts`
-6. `Verification`
-7. `Current State`
-8. `Open Questions / Blockers`
+4. `Architecture and Flowcharts`
+5. `Decisions`
+6. `Interfaces / Contracts`
+7. `Verification`
+8. `Current State`
+9. `Open Questions / Blockers`
 
 文档表达**当前有效知识**，不得生成 Timeline、Changelog、Next Steps、TODO、实现流水、工具调用流水、文件修改列表或未经标识的推测。
 
@@ -95,11 +99,13 @@ AI 在正常交互中通过结构化工具提交事件，不为每条事实额�
 - 可选 details、rationale、evidence
 - upsert/delete 语义
 
-相同 key 表示同一事实的更新，不表示新的时间点。事件仅用于：Task Description、Repository Context、Design、Decision、Interface Contract、Verification、Current State、Open Question 或 Blocker。
+相同 key 表示同一事实的更新，不表示新的时间点。事件仅用于：Task Description、Repository Context、Design、Architecture and Flowcharts、Decision、Interface Contract、Verification、Current State、Open Question 或 Blocker。
+
+`architecture_and_flowcharts` 事件记录已确认的系统结构、组件关系与流程，映射到 `Architecture and Flowcharts` 章节。`details` 可包含 Mermaid 代码块；合并时必须保留图表语义，不得发明组件或流程。一般设计约束和行为结论继续使用 `design`。
 
 不得记录 Plan、Next Step、TODO、阶段切换、进度、普通编辑、文件读取、临时调试过程、思考过程、密钥或 Token。
 
-启用 Task Memory 后，扩展必须通过 `before_agent_start` 向 system prompt 追加何时使用 `task_memory_event` 的简短指导，并要求工作模型不得直接修改 Task Memory 文件。不得伪造 user message。正式 `TASK.md` 与 pending event 队列只由扩展内部管理和 checkpoint 消费，不得注入工作模型上下文。
+启用 Task Memory 后，扩展必须通过 `before_agent_start` 向 system prompt 追加何时使用 `task_memory_event` 的简短指导，并要求工作模型不得直接修改 Task Memory 文件。不得伪造 user message；`add` 是用户显式发起的请求，可以发送包含用户指导和记录约束的 user message。正式 `TASK.md` 与 pending event 队列只由扩展内部管理和 checkpoint 消费，不得注入工作模型上下文。
 
 ## 7. 需要验证的点
 

@@ -10,7 +10,7 @@ import {
 } from "./auto-checkpoint.ts";
 import { checkpoint } from "./checkpoint.ts";
 import { DEFAULT_CONFIG, loadConfig, type TaskMemoryConfig } from "./config.ts";
-import { buildTaskMemorySystemPromptSection } from "./prompt.ts";
+import { buildTaskMemoryAddPrompt, buildTaskMemorySystemPromptSection } from "./prompt.ts";
 import { formatTaskMemoryStatus, readTaskMemoryStats, type TaskMemoryStats } from "./status.ts";
 import {
   acquireLock,
@@ -42,6 +42,7 @@ const EventParams = Type.Object({
       "task_description",
       "repository_context",
       "design",
+      "architecture_and_flowcharts",
       "decision",
       "interface_contract",
       "verification",
@@ -51,7 +52,7 @@ const EventParams = Type.Object({
     ] as const,
     {
       description:
-        "Choose the fact type: task_description=task scope, objective, or non-goal; repository_context=repository, branch, commit, or worktree context; design=confirmed architecture or behavior; decision=chosen option with rationale; interface_contract=exact API, schema, protocol, or compatibility contract; verification=condition, assumption, or risk that still needs verification, not a test result; current_state=current durable implementation truth, not a progress update; open_question=unresolved question; blocker=issue currently preventing completion.",
+        "Choose the fact type: task_description=task scope, objective, or non-goal; repository_context=repository, branch, commit, or worktree context; design=confirmed design constraints or behavior; architecture_and_flowcharts=confirmed system structure, component relationships, or flows, including Mermaid diagrams in details; decision=chosen option with rationale; interface_contract=exact API, schema, protocol, or compatibility contract; verification=condition, assumption, or risk that still needs verification, not a test result; current_state=current durable implementation truth, not a progress update; open_question=unresolved question; blocker=issue currently preventing completion.",
     },
   ),
   key: Type.String({
@@ -464,9 +465,9 @@ export default function taskMemoryExtension(pi: ExtensionAPI) {
   });
 
   pi.registerCommand("task-memory", {
-    description: "Start, resume, checkpoint, inspect, or stop task memory",
+    description: "Start, resume, request an event, checkpoint, inspect, or stop task memory",
     getArgumentCompletions: async (prefix) => {
-      const commands = ["start", "resume", "checkpoint", "status", "list", "stop"];
+      const commands = ["start", "resume", "add", "checkpoint", "status", "list", "stop"];
       const tokens = prefix.trimStart().split(/\s+/);
       if (tokens.length <= 1) return commands.filter((item) => item.startsWith(tokens[0] ?? "")).map((item) => ({ value: item, label: item }));
       return null;
@@ -474,8 +475,23 @@ export default function taskMemoryExtension(pi: ExtensionAPI) {
     handler: async (args, ctx) => {
       config = loadConfig(ctx.cwd);
       try {
-        const [command = "status", ...rest] = args.trim().split(/\s+/).filter(Boolean);
-        const value = rest.join(" ");
+        const input = args.trim();
+        const command = input.match(/^\S+/)?.[0] ?? "status";
+        const value = input.slice(command.length).trim();
+        if (command === "add") {
+          if (!activePaths || !activeSlug) {
+            throw new Error("Task memory is inactive. Run /task-memory start <slug> or resume <slug> first.");
+          }
+          if (!value) throw new Error("Usage: /task-memory add <guidance>");
+          const prompt = buildTaskMemoryAddPrompt(value);
+          if (ctx.isIdle()) {
+            pi.sendUserMessage(prompt);
+          } else {
+            pi.sendUserMessage(prompt, { deliverAs: "followUp" });
+            ctx.ui.notify("Task memory event request queued for the agent.", "info");
+          }
+          return;
+        }
         if (command === "start") {
           if (activePaths) throw new Error(`Task '${activeSlug}' is already active. Stop it first.`);
           const slug = withDatePrefix(value);
@@ -536,7 +552,7 @@ export default function taskMemoryExtension(pi: ExtensionAPI) {
           );
           return;
         }
-        throw new Error("Usage: /task-memory start <slug> | resume <slug-or-path> | checkpoint | status | list | stop [merge|keep|discard]");
+        throw new Error("Usage: /task-memory start <slug> | resume <slug-or-path> | add <guidance> | checkpoint | status | list | stop [merge|keep|discard]");
       } catch (error) {
         ctx.ui.notify((error as Error).message, "error");
       }
